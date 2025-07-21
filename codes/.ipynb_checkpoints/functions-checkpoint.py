@@ -313,3 +313,174 @@ def FrequentWordsWithMismatchesRCNew(Text, k, d):
     max_freq = max(freq.values())
 
     return [pattern for pattern, count in freq.items() if count == max_freq]
+
+def MotifEnumeration(Dna,k,d):
+    dnaStrings = Dna.split()
+    dna_len = len(dnaStrings)
+    kmers_in_dna = defaultdict(int)
+    patterns = list()
+    for string in dnaStrings:
+        #print(string)
+        str_len = len(string)
+        kmers_in_string = list()
+        for index in range(str_len-k+1):
+            
+            k_mer = string[index:index+k]
+            neighbors = Neighbors(k_mer,d)
+            kmers_in_string = kmers_in_string+neighbors
+            #print(k_mer +":",neighbors)
+        kmers_in_string = list(set(kmers_in_string))
+        #print(kmers_in_string)
+        for kmers in kmers_in_string:
+            kmers_in_dna[kmers] +=1
+    for pattern in kmers_in_dna:
+        if kmers_in_dna[pattern]== dna_len:
+            patterns.append(pattern)
+
+    return patterns
+
+
+def DistanceBetweenPatternAndStrings(Pattern, Dna):
+    dnaList = Dna.split()
+    k = len(Pattern)
+    distance = 0
+    for dnaString in dnaList:
+        
+        hammingDist = 99999
+        k_mer_list = GenerateKmers(k,dnaString)
+        
+        for kmer in k_mer_list:
+            
+            dis = HammingDistance(Pattern,kmer)
+            
+            if hammingDist > dis:
+                hammingDist = dis
+       
+        distance = distance + hammingDist
+    return distance
+def AllStrings(k):
+    
+    pattern_list = list()
+    for index in range(k):
+        pattern_list.append('A')
+    pattern = "".join(pattern_list)
+    result = Neighbors(pattern,k)
+    return result
+
+
+def GenerateKmers(k,data):
+    data_len = len(data)
+    k_mer_list = list()
+    for index in range(data_len-k+1):
+        k_mer = data[index:index+k]
+        if k_mer_list.count(k_mer) == 0:
+            k_mer_list.append(k_mer)
+    return k_mer_list
+def Motif_Score(motif):
+    final_score = 0 
+    k = len(motif[0])
+    t = len(motif)
+    for j in range(k):
+        column_score_map = defaultdict(int)
+        column_score = 0 
+        for i in range(t):
+            column_score_map[motif[i][j]]+=1
+        
+        max_value_key = max(column_score_map, key=column_score_map.get)
+        
+       
+        
+        for key in column_score_map:
+           
+            if key != max_value_key:
+                   
+                    column_score += column_score_map[key]
+        final_score += column_score
+    return final_score
+def Apply_Laplace(count_matrix):
+    
+    k = len(count_matrix[0])
+    for i in range(4):
+        for j in range(k):
+            count_matrix[i][j]+=1
+    return count_matrix
+    
+def Count_Matrix(motif):
+   
+    k = len(motif[0])
+    
+    t = len(motif)
+   
+    count_matrix = []
+    A_COUNT = list()
+    C_COUNT = list()
+    G_COUNT = list()
+    T_COUNT = list()
+    
+    for j in range(k):
+        column_score_map = defaultdict(int)
+        column_score = 0 
+        for i in range(t):
+            column_score_map[motif[i][j]]+=1
+            
+        A_COUNT.append(column_score_map['A'])
+        C_COUNT.append(column_score_map['C'])
+        G_COUNT.append(column_score_map['G'])
+        T_COUNT.append(column_score_map['T'])
+    
+    count_matrix.append(A_COUNT)
+    count_matrix.append(C_COUNT)
+    count_matrix.append(G_COUNT)
+    count_matrix.append(T_COUNT)
+    count_matrix = Apply_Laplace(count_matrix)
+    return count_matrix
+def Profile_Matrix(count_matrix):
+    profile_matrix = []
+    k = len(count_matrix[0])
+    column_sums = [0]*k
+    for row in count_matrix:
+        for i in range(k):
+            column_sums[i] += row[i]
+            
+   
+    for row in count_matrix:
+        prob = [0]*k
+        for i in range(k):
+            prob[i] = row[i]/column_sums[i]
+        profile_matrix.append(prob)
+    return profile_matrix
+    
+def Get_Profile_Matrix(motifs):
+    count_matrix = Count_Matrix(motifs)
+    
+    profile_matrix = Profile_Matrix(count_matrix)
+    return profile_matrix
+def Most_Probable_Kmer(k,Text,profile_matrix):
+    #print(Text)
+    prob = -1
+    most_prob_kmer = ''
+    
+    kmer_list = GenerateKmers(k,Text)
+    for kmer in kmer_list:
+        #print(kmer+":",Pr(kmer,profile_matrix))
+        if Pr(kmer,profile_matrix) > prob:
+            prob = Pr(kmer,profile_matrix)
+            most_prob_kmer = kmer
+           
+           
+    return most_prob_kmer
+def Pr(kmer,Profile):
+    
+    k = len(kmer)
+    prob = 1
+    for index in range(k):
+        
+        if kmer[index] == 'A':
+            prob = prob*Profile[0][index]
+        elif kmer[index] == 'C':
+            prob = prob*Profile[1][index]
+        elif kmer[index] == 'G':
+            prob = prob*Profile[2][index]
+        elif kmer[index] == 'T':
+            prob = prob*Profile[3][index]
+    return prob
