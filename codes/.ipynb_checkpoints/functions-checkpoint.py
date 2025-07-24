@@ -1,6 +1,6 @@
 # functions.py>
 from collections import defaultdict
-
+import random
 def PatternCount(text,pattern):
     count = 0
     pattern_len = len(pattern)
@@ -484,3 +484,68 @@ def Pr(kmer,Profile):
         elif kmer[index] == 'T':
             prob = prob*Profile[3][index]
     return prob
+
+'''This method returns Motiifs from a DNA string based on a Profile Matrix '''
+def Motiffs(Profile,DNA):
+    k = len(Profile[0])
+    
+    DNA_LIST  = DNA.split()
+   
+    NUM = len(DNA_LIST)
+    
+   
+    MOTIFS = []
+    for i in range(NUM):
+        CUR_STRING = DNA_LIST[i]
+        BEST_KMER  = Most_Probable_Kmer(k,CUR_STRING,Profile)
+        #print("CURRENT STRING:"+CUR_STRING+" BEST KMER:"+BEST_KMER)
+        MOTIFS.append(list(BEST_KMER))
+    return MOTIFS
+''' Below Method can be used to test with a known Profile matix '''
+def HARD_CODE_PROFILE_MATRIX():
+    row1 = "0.8 0 0 0.2"
+    row2 = "0 0.6 0.2 0"
+    row3 = "0.2 0.2 0.8 0"
+    row4 = "0 0.2 0 0.8"
+    row1_list = row1.split()
+    row2_list = row2.split()
+    row3_list = row3.split()
+    row4_list = row4.split()
+    row1_float = [float(s) for s in row1_list]
+    row2_float = [float(s) for s in row2_list]
+    row3_float = [float(s) for s in row3_list]
+    row4_float = [float(s) for s in row4_list]
+    profile_matrix = [row1_float,row2_float,row3_float,row4_float]
+    return profile_matrix
+
+'''**Randomized Motiff Search**
+Now we will be using **Monte-Carlo** simulation method in our Algorithm. As per this, we will randomly select K-mer from each of the DNA string, and use that as the starting motiff to create a starting profile.
+
+After that we will be Iterating over all the DNA strings and find Most probable K-mer from each and with them after each iteration, we will have a new Motiff.
+
+We will calculate score and until we get a better score, we will keep doing the same loop. in next loop, this motiff will be used as base for starting Profile.
+'''
+def RandomizedMotifSearch (DNA, k , t):
+    DNA_LIST  = DNA.split()
+    DNA_LEN = len(DNA_LIST)
+    
+    INIT_MOTIF = []
+    for i in range(DNA_LEN):
+        CUR_STRING = DNA_LIST[i]
+        KMERS = GenerateKmers(k,CUR_STRING)
+        NUM_KMERS = len(KMERS)
+        RANDOM_POSITION = random.randint(0, NUM_KMERS-1)
+        RANDOM_KMER = KMERS[RANDOM_POSITION]
+        INIT_MOTIF.append(list(RANDOM_KMER))
+        BEST_MOTIF  = INIT_MOTIF
+        
+        
+    while True:
+        INIT_PROFILE = Get_Profile_Matrix(BEST_MOTIF)
+        MOTIFS = Motiffs(INIT_PROFILE,DNA)
+        #print(Motif_Score(MOTIFS))
+        if Motif_Score(MOTIFS) < Motif_Score(BEST_MOTIF):
+                
+                BEST_MOTIF = MOTIFS 
+        else:
+                return BEST_MOTIF
